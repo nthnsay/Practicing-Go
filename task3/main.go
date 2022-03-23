@@ -3,42 +3,44 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	//"html/template"
 	//"encoding/json"
 	"os"
+	"flag"
 )
 
 func main() {
-	var storyContainer story
-	jsonFile, err := os.Open("./gopher.json")
-
-	if err != nil {
-		fmt.Println(err)
+	filename := flag.String("file", "gopher.json", "the JSON file with the CYOA story")
+	flag.Parse()
+	fmt.Printf("Using the story in %s.\n", *filename)
+	
+	f,err := os.Open(*filename)
+	if err !=nil{
+		// handle instead of panic
+		panic(err)
 	}
-	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err != nil {
-		fmt.Println(err)
+
+	d := json.NewDecoder(f)
+	var story Story
+	
+	if err := d.Decode(&story); err !=nil{
+		panic(err)
 	}
-	//var result map[string]interface{}
-	json.Unmarshal([]byte(byteValue), &storyContainer)
-	fmt.Println(storyContainer)
-	//err2 := json.Unmarshal(jsonFile, &stories)
 
-	//Read in Json file into a map of string[storyarc]
+	fmt.Print("%+v\n", story)
+
 }
 
-type story struct {
-	storyarcs intro
+type Story map[string]Chapter
+
+type Chapter struct {
+	Title string `json:"title"`
+	Paragraphs []string `json:"story"`
+	Options []Option `josn:"options"`
 }
 
-type intro struct {
-	title string
-	story []string
-}
-
-type options struct {
-	text string
-	arc  string
+type Option struct {
+	Text string `json:"text"`
+	Chapter  string `json:"arc"`
 }
